@@ -1,0 +1,42 @@
+version: "3"
+volumes:
+  db-volume:
+services:
+  mysql:
+    image: mysql:5.7.30
+    environment:
+      # MySQL設定値
+      MYSQL_USER: user
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: go-ddd
+    ports:
+      - 13306:3306
+    volumes:
+      - db-volume:/var/lib/mysql
+  app:
+    build: .
+    ports:
+      - "8081:8080"
+    entrypoint:
+      - dockerize
+      - -wait
+      - tcp://mysql:3306
+    command: realize start --run
+    restart: always
+    volumes:
+      # realizeがコードの変更を検知する
+      - .:/go/src/go-ddd
+    depends_on:
+      - mysql
+  test_mysql:
+    image: mysql:5.7.30
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_USER: user
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: go-ddd-test
+    ports:
+      - "13307:3306"
